@@ -16,7 +16,7 @@ jobs:
                 heroku_app_name: "${{secrets.HEROKU_APP_NAME}}"
                 heroku_email: "${{secrets.HEROKU_EMAIL}}"
                 buildpack: "https://buildpack-registry.s3.amazonaws.com/buildpacks/jincod/dotnetcore.tgz"
-                #healthcheck: "${{secrets.HEROKU_HEALTHCHECK_URL}}"
+                #healthcheck: "https://${{secrets.HEROKU_APP_NAME}}.herokuapp.com/health"
                 #checkstring: "ok"
                 #delay: 5
                 #rollbackonhealthcheckfailed: true
