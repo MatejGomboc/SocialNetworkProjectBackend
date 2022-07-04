@@ -9,12 +9,26 @@ using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<AuthController.JwtSettings>(builder.Configuration.GetSection("Jwt"));
+var settings = new Dictionary<string, string>
+{
+    { "databaseConnectionString", Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? string.Empty },
+    { "sendgridApiKey", Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ?? string.Empty },
+    { "Jwt:Key", Environment.GetEnvironmentVariable("JWT_KEY") ?? string.Empty },
+    { "Jwt:Issuer", builder.Configuration.GetSection("Jwt:Issuer").Value },
+    { "Jwt:AccessTokenLifetimeMinutes", builder.Configuration.GetSection("Jwt:AccessTokenLifetimeMinutes").Value },
+    { "Jwt:RefreshTokenLifetimeDays", builder.Configuration.GetSection("Jwt:RefreshTokenLifetimeDays").Value }
+};
+
+var configurationBuilder = new ConfigurationBuilder();
+configurationBuilder.AddInMemoryCollection(settings);
+IConfiguration configuration = configurationBuilder.Build();
+
+builder.Services.Configure<AuthController.JwtSettings>(configuration.GetSection("Jwt"));
 
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<ForumProjectDbContext>(
-    options => options.UseNpgsql(builder.Configuration.GetConnectionString("Database"))
+    options => options.UseNpgsql(configuration.GetSection("databaseConnectionString").Value)
 );
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
@@ -25,12 +39,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             RequireSignedTokens = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Jwt:Key").Value)
+                Encoding.UTF8.GetBytes(configuration.GetSection("Jwt:Key").Value)
             ),
             ValidAlgorithms = new List<string> { SecurityAlgorithms.HmacSha256Signature },
 
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration.GetSection("Jwt:Issuer").Value,
+            ValidIssuer = configuration.GetSection("Jwt:Issuer").Value,
 
             ValidateAudience = false,
 
