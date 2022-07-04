@@ -16,7 +16,6 @@ jobs:
                 heroku_app_name: "${{secrets.HEROKU_APP_NAME}}"
                 heroku_email: "${{secrets.HEROKU_EMAIL}}"
                 buildpack: "https://buildpack-registry.s3.amazonaws.com/buildpacks/jincod/dotnetcore.tgz"
-                #healthcheck: "https://socialnetworkprojekt.herokuapp.com/swagger"
-                #checkstring: "TODO !!!"
-                #delay: 5
-                #rollbackonhealthcheckfailed: true
+                healthcheck: "${{secrets.HEROKU_HEALTHCHECK_URL}}"
+                delay: 5
+                rollbackonhealthcheckfailed: true
