@@ -15,6 +15,7 @@ jobs:
                 heroku_api_key: "${{secrets.HEROKU_API_KEY}}"
                 heroku_app_name: "${{secrets.HEROKU_APP_NAME}}"
                 heroku_email: "${{secrets.HEROKU_EMAIL}}"
+                stack: "heroku-22"
                 buildpack: "https://buildpack-registry.s3.amazonaws.com/buildpacks/jincod/dotnetcore.tgz"
                 #healthcheck: "https://${{secrets.HEROKU_APP_NAME}}.herokuapp.com/health"
                 #checkstring: "ok"
