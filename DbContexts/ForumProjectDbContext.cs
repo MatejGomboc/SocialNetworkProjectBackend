@@ -38,6 +38,19 @@ namespace ForumProjectBackend.DbContexts
             [DisplayFormat(ConvertEmptyStringToNull = false)]
             public string PasswordHash { get; set; } = string.Empty;
 
+            [DataType(DataType.EmailAddress)]
+            [MaxLength(128)]
+            [Required(AllowEmptyStrings = false)]
+            [DisplayFormat(ConvertEmptyStringToNull = false)]
+            public string EmailAddress { get; set; } = string.Empty;
+
+            [Required]
+            public bool EmailAddressConfirmed { get; set; } = false;
+
+            [DataType(DataType.DateTime)]
+            [Required]
+            public DateTime DateTimeRegistered { get; set; } = DateTime.UnixEpoch;
+
             [Required(AllowEmptyStrings = false)]
             [DisplayFormat(ConvertEmptyStringToNull = false)]
             public string RefreshTokenHash { get; set; } = string.Empty;

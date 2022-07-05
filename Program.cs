@@ -11,9 +11,15 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 var settings = new Dictionary<string, string>
 {
-    { "databaseConnectionString", Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? string.Empty },
-    { "sendgridApiKey", Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ?? string.Empty },
-    { "Jwt:Key", Environment.GetEnvironmentVariable("JWT_KEY") ?? string.Empty },
+    { "DatabaseConnectionString", Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ??
+        builder.Configuration.GetSection("Secrets:DatabaseConnectionString").Value },
+
+    { "SendgridApiKey", Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ??
+        builder.Configuration.GetSection("Secrets:SendgridApiKey").Value },
+
+    { "Jwt:Key", Environment.GetEnvironmentVariable("JWT_KEY") ??
+        builder.Configuration.GetSection("Secrets:JwtKey").Value },
+
     { "Jwt:Issuer", builder.Configuration.GetSection("Jwt:Issuer").Value },
     { "Jwt:AccessTokenLifetimeMinutes", builder.Configuration.GetSection("Jwt:AccessTokenLifetimeMinutes").Value },
     { "Jwt:RefreshTokenLifetimeDays", builder.Configuration.GetSection("Jwt:RefreshTokenLifetimeDays").Value }
@@ -28,7 +34,7 @@ builder.Services.Configure<AuthController.JwtSettings>(configuration.GetSection(
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<ForumProjectDbContext>(
-    options => options.UseNpgsql(configuration.GetSection("databaseConnectionString").Value)
+    options => options.UseNpgsql(configuration.GetSection("DatabaseConnectionString").Value)
 );
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(

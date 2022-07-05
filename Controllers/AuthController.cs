@@ -42,6 +42,12 @@ namespace ForumProjectBackend.Controllers
             [DisplayFormat(ConvertEmptyStringToNull = false)]
             [Compare(nameof(Password))]
             public string ConfirmPassword { get; set; } = string.Empty;
+
+            [DataType(DataType.EmailAddress)]
+            [MaxLength(128)]
+            [Required(AllowEmptyStrings = false)]
+            [DisplayFormat(ConvertEmptyStringToNull = false)]
+            public string EmailAddress { get; set; } = string.Empty;
         }
 
         public class LoginCredentials
@@ -195,7 +201,7 @@ namespace ForumProjectBackend.Controllers
         [HttpPost]
         [Route("register")]
         [AllowAnonymous]
-        public IActionResult Register([FromBody] RegisterDto registerDto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
             try
             {
@@ -215,7 +221,7 @@ namespace ForumProjectBackend.Controllers
                 ForumProjectDbContext.User? existingUser;
                 try
                 {
-                    existingUser = _dbContext.Users.Find(registerDto.Username);
+                    existingUser = await _dbContext.Users.FindAsync(registerDto.Username);
                 }
                 catch (Exception)
                 {
@@ -241,12 +247,15 @@ namespace ForumProjectBackend.Controllers
                     {
                         Username = registerDto.Username,
                         PasswordHash = ForumProjectDbContext.User.HashPassword(registerDto.Password),
+                        EmailAddress = registerDto.EmailAddress,
+                        EmailAddressConfirmed = false,
+                        DateTimeRegistered = DateTime.UtcNow,
                         RefreshTokenHash = "*",
                         DateTimeRefreshTokenCreated = DateTime.MinValue
                     };
 
                     _dbContext.Users.Add(newUser);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception)
                 {
@@ -255,6 +264,9 @@ namespace ForumProjectBackend.Controllers
                         title: "Failed to write data to database."
                     );
                 }
+
+                // send confirmation email
+                // TODO !!! what if it fails ??
 
                 return Created(
                     HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + HttpContext.Request.Path,
@@ -273,7 +285,7 @@ namespace ForumProjectBackend.Controllers
         [HttpPatch]
         [Route("login")]
         [AllowAnonymous]
-        public IActionResult Login([FromBody] LoginCredentials credentials)
+        public async Task<IActionResult> Login([FromBody] LoginCredentials credentials)
         {
             try
             {
@@ -288,7 +300,7 @@ namespace ForumProjectBackend.Controllers
                 ForumProjectDbContext.User? user;
                 try
                 {
-                    user = _dbContext.Users.Find(credentials.Username);
+                    user = await _dbContext.Users.FindAsync(credentials.Username);
                 }
                 catch (Exception)
                 {
@@ -308,6 +320,12 @@ namespace ForumProjectBackend.Controllers
                     return Unauthorized();
                 }
 
+                // TODO !!!
+                /*if (!user.EmailAddressConfirmed)
+                {
+                    return Unauthorized();
+                }*/
+
                 string refreshToken = GenerateRefreshToken();
                 user.RefreshTokenHash = ForumProjectDbContext.User.HashRefreshToken(refreshToken);
                 user.DateTimeRefreshTokenCreated = DateTime.UtcNow;
@@ -322,7 +340,7 @@ namespace ForumProjectBackend.Controllers
                 try
                 {
                     _dbContext.Users.Update(user);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception)
                 {
@@ -352,7 +370,7 @@ namespace ForumProjectBackend.Controllers
         [HttpPatch]
         [Route("refresh")]
         [AllowAnonymous]
-        public IActionResult Refresh([FromBody] LoginResponse credentials)
+        public async Task<IActionResult> Refresh([FromBody] LoginResponse credentials)
         {
             try
             {
@@ -411,7 +429,7 @@ namespace ForumProjectBackend.Controllers
                 ForumProjectDbContext.User? user;
                 try
                 {
-                    user = _dbContext.Users.Find(username);
+                    user = await _dbContext.Users.FindAsync(username);
                 }
                 catch (Exception)
                 {
@@ -450,7 +468,7 @@ namespace ForumProjectBackend.Controllers
                 try
                 {
                     _dbContext.Users.Update(user);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception)
                 {
@@ -480,7 +498,7 @@ namespace ForumProjectBackend.Controllers
         [HttpPatch]
         [Route("logout")]
         [Authorize]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             try
             {
@@ -501,7 +519,7 @@ namespace ForumProjectBackend.Controllers
                 ForumProjectDbContext.User? user;
                 try
                 {
-                    user = _dbContext.Users.Find(username);
+                    user = await _dbContext.Users.FindAsync(username);
                 }
                 catch (Exception)
                 {
@@ -522,7 +540,7 @@ namespace ForumProjectBackend.Controllers
                 try
                 {
                     _dbContext.Users.Update(user);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception)
                 {
@@ -546,7 +564,7 @@ namespace ForumProjectBackend.Controllers
         [HttpDelete]
         [Route("unregister")]
         [Authorize]
-        public IActionResult Unregister()
+        public async Task<IActionResult> Unregister()
         {
             try
             {
@@ -567,7 +585,7 @@ namespace ForumProjectBackend.Controllers
                 ForumProjectDbContext.User? user;
                 try
                 {
-                    user = _dbContext.Users.Find(username);
+                    user = await _dbContext.Users.FindAsync(username);
                 }
                 catch (Exception)
                 {
@@ -585,7 +603,7 @@ namespace ForumProjectBackend.Controllers
                 try
                 {
                     _dbContext.Users.Remove(user);
-                    _dbContext.SaveChanges();
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception)
                 {
