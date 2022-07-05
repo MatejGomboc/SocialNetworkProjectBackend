@@ -1,15 +1,15 @@
-﻿using ForumProjectBackend.DbContexts;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SocialNetworkProjectBackend.DbContexts;
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ForumProjectBackend.Controllers
+namespace SocialNetworkProjectBackend.Controllers
 {
     [ApiController]
     [Route("api/auth")]
@@ -71,7 +71,8 @@ namespace ForumProjectBackend.Controllers
         }
 
         private readonly JwtSettings _jwtSettings;
-        private readonly ForumProjectDbContext _dbContext;
+        private readonly SocialNetworkProjectDbContext _dbContext;
+        private readonly EmailService _emailService;
 
         private static bool ValidateUsernameFormat(string username)
         {
@@ -192,10 +193,12 @@ namespace ForumProjectBackend.Controllers
             return Convert.ToBase64String(rndNum);
         }
 
-        public AuthController(IOptions<JwtSettings> jwtSettings, ForumProjectDbContext dbContext)
+        public AuthController(IOptions<JwtSettings> jwtSettings,
+            SocialNetworkProjectDbContext dbContext, EmailService emailService)
         {
             _jwtSettings = jwtSettings.Value;
             _dbContext = dbContext;
+            _emailService = emailService;
         }
 
         [HttpPost]
@@ -218,7 +221,7 @@ namespace ForumProjectBackend.Controllers
                     );
                 }
 
-                ForumProjectDbContext.User? existingUser;
+                SocialNetworkProjectDbContext.User? existingUser;
                 try
                 {
                     existingUser = await _dbContext.Users.FindAsync(registerDto.Username);
@@ -241,12 +244,20 @@ namespace ForumProjectBackend.Controllers
                     return BadRequest("Invalid password format.");
                 }
 
+                if (!await _emailService.SendRegisterConfirmEmailAsync(registerDto.EmailAddress, registerDto.Username, "TODO"))
+                {
+                    return Problem(
+                        statusCode: 500,
+                        title: "Failed to send the registration confirmation email."
+                    );
+                }
+
                 try
                 {
-                    var newUser = new ForumProjectDbContext.User
+                    var newUser = new SocialNetworkProjectDbContext.User
                     {
                         Username = registerDto.Username,
-                        PasswordHash = ForumProjectDbContext.User.HashPassword(registerDto.Password),
+                        PasswordHash = SocialNetworkProjectDbContext.User.HashPassword(registerDto.Password),
                         EmailAddress = registerDto.EmailAddress,
                         EmailAddressConfirmed = false,
                         DateTimeRegistered = DateTime.UtcNow,
@@ -264,9 +275,6 @@ namespace ForumProjectBackend.Controllers
                         title: "Failed to write data to database."
                     );
                 }
-
-                // send confirmation email
-                // TODO !!! what if it fails ??
 
                 return Created(
                     HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + HttpContext.Request.Path,
@@ -297,7 +305,7 @@ namespace ForumProjectBackend.Controllers
                     );
                 }
 
-                ForumProjectDbContext.User? user;
+                SocialNetworkProjectDbContext.User? user;
                 try
                 {
                     user = await _dbContext.Users.FindAsync(credentials.Username);
@@ -315,19 +323,18 @@ namespace ForumProjectBackend.Controllers
                     return Unauthorized();
                 }
 
-                if (!ForumProjectDbContext.User.VerifyPassword(credentials.Password, user.PasswordHash))
+                if (!SocialNetworkProjectDbContext.User.VerifyPassword(credentials.Password, user.PasswordHash))
                 {
                     return Unauthorized();
                 }
 
-                // TODO !!!
-                /*if (!user.EmailAddressConfirmed)
+                if (!user.EmailAddressConfirmed)
                 {
                     return Unauthorized();
-                }*/
+                }
 
                 string refreshToken = GenerateRefreshToken();
-                user.RefreshTokenHash = ForumProjectDbContext.User.HashRefreshToken(refreshToken);
+                user.RefreshTokenHash = SocialNetworkProjectDbContext.User.HashRefreshToken(refreshToken);
                 user.DateTimeRefreshTokenCreated = DateTime.UtcNow;
 
                 string accessToken = GenerateAccessToken(
@@ -426,7 +433,7 @@ namespace ForumProjectBackend.Controllers
                     );
                 }
 
-                ForumProjectDbContext.User? user;
+                SocialNetworkProjectDbContext.User? user;
                 try
                 {
                     user = await _dbContext.Users.FindAsync(username);
@@ -444,7 +451,7 @@ namespace ForumProjectBackend.Controllers
                     return Unauthorized();
                 }
 
-                if (!ForumProjectDbContext.User.VerifyRefreshToken(credentials.RefreshToken, user.RefreshTokenHash))
+                if (!SocialNetworkProjectDbContext.User.VerifyRefreshToken(credentials.RefreshToken, user.RefreshTokenHash))
                 {
                     return Unauthorized();
                 }
@@ -455,7 +462,7 @@ namespace ForumProjectBackend.Controllers
                 }
 
                 string newRefreshToken = GenerateRefreshToken();
-                user.RefreshTokenHash = ForumProjectDbContext.User.HashRefreshToken(newRefreshToken);
+                user.RefreshTokenHash = SocialNetworkProjectDbContext.User.HashRefreshToken(newRefreshToken);
                 user.DateTimeRefreshTokenCreated = DateTime.UtcNow;
 
                 string newAccessToken = GenerateAccessToken(
@@ -516,7 +523,7 @@ namespace ForumProjectBackend.Controllers
                     );
                 }
 
-                ForumProjectDbContext.User? user;
+                SocialNetworkProjectDbContext.User? user;
                 try
                 {
                     user = await _dbContext.Users.FindAsync(username);
@@ -582,7 +589,7 @@ namespace ForumProjectBackend.Controllers
                     );
                 }
 
-                ForumProjectDbContext.User? user;
+                SocialNetworkProjectDbContext.User? user;
                 try
                 {
                     user = await _dbContext.Users.FindAsync(username);

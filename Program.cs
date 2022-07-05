@@ -1,9 +1,10 @@
-using ForumProjectBackend.Controllers;
-using ForumProjectBackend.DbContexts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SocialNetworkProjectBackend;
+using SocialNetworkProjectBackend.Controllers;
+using SocialNetworkProjectBackend.DbContexts;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
 
@@ -14,15 +15,20 @@ var settings = new Dictionary<string, string>
     { "DatabaseConnectionString", Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ??
         builder.Configuration.GetSection("Secrets:DatabaseConnectionString").Value },
 
-    { "SendgridApiKey", Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ??
-        builder.Configuration.GetSection("Secrets:SendgridApiKey").Value },
-
     { "Jwt:Key", Environment.GetEnvironmentVariable("JWT_KEY") ??
         builder.Configuration.GetSection("Secrets:JwtKey").Value },
 
     { "Jwt:Issuer", builder.Configuration.GetSection("Jwt:Issuer").Value },
     { "Jwt:AccessTokenLifetimeMinutes", builder.Configuration.GetSection("Jwt:AccessTokenLifetimeMinutes").Value },
-    { "Jwt:RefreshTokenLifetimeDays", builder.Configuration.GetSection("Jwt:RefreshTokenLifetimeDays").Value }
+    { "Jwt:RefreshTokenLifetimeDays", builder.Configuration.GetSection("Jwt:RefreshTokenLifetimeDays").Value },
+
+    { "Mailing:SendgridApiKey", Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ??
+        builder.Configuration.GetSection("Secrets:SendgridApiKey").Value },
+
+    { "Mailing:FromAddress", Environment.GetEnvironmentVariable("FROM_EMAIL_ADDRESS") ??
+        builder.Configuration.GetSection("Secrets:FromEmailAddress").Value },
+
+    { "Mailing:FromName", builder.Configuration.GetSection("Mailing:FromName").Value }
 };
 
 var configurationBuilder = new ConfigurationBuilder();
@@ -30,10 +36,11 @@ configurationBuilder.AddInMemoryCollection(settings);
 IConfiguration configuration = configurationBuilder.Build();
 
 builder.Services.Configure<AuthController.JwtSettings>(configuration.GetSection("Jwt"));
+builder.Services.Configure<EmailService.Settings>(configuration.GetSection("Mailing"));
 
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<ForumProjectDbContext>(
+builder.Services.AddDbContext<SocialNetworkProjectDbContext>(
     options => options.UseNpgsql(configuration.GetSection("DatabaseConnectionString").Value),
     ServiceLifetime.Scoped
 );
@@ -91,6 +98,8 @@ builder.Services.AddCors(options =>
         );
     }
 );
+
+builder.Services.AddSingleton<EmailService>();
 
 WebApplication app = builder.Build();
 

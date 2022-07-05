@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace ForumProjectBackend.DbContexts
+namespace SocialNetworkProjectBackend.DbContexts
 {
-    public class ForumProjectDbContext : DbContext
+    public class SocialNetworkProjectDbContext : DbContext
     {
         public class User
         {
@@ -60,7 +60,7 @@ namespace ForumProjectBackend.DbContexts
             public DateTime DateTimeRefreshTokenCreated { get; set; } = DateTime.UnixEpoch;
         }
 
-        public ForumProjectDbContext(DbContextOptions<ForumProjectDbContext> options) :
+        public SocialNetworkProjectDbContext(DbContextOptions<SocialNetworkProjectDbContext> options) :
             base(options)
         {
         }
