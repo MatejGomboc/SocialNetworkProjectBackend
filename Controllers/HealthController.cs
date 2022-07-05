@@ -7,7 +7,7 @@ namespace SocialNetworkProjectBackend.Controllers
     [Route("api")]
     public class HealthController : ControllerBase
     {
-        [HttpPost]
+        [HttpGet]
         [Route("health")]
         [AllowAnonymous]
         public IActionResult Health()
