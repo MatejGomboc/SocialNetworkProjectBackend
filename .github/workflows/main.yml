@@ -19,5 +19,5 @@ jobs:
                 buildpack: "https://buildpack-registry.s3.amazonaws.com/buildpacks/jincod/dotnetcore.tgz"
                 healthcheck: "${{secrets.HEROKU_HEALTHCHECK_URL}}"
                 checkstring: "ok"
-                delay: 5
+                delay: 10
                 rollbackonhealthcheckfailed: true
