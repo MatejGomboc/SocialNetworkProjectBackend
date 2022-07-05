@@ -34,7 +34,8 @@ builder.Services.Configure<AuthController.JwtSettings>(configuration.GetSection(
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<ForumProjectDbContext>(
-    options => options.UseNpgsql(configuration.GetSection("DatabaseConnectionString").Value)
+    options => options.UseNpgsql(configuration.GetSection("DatabaseConnectionString").Value),
+    ServiceLifetime.Scoped
 );
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
