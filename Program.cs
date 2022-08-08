@@ -28,7 +28,10 @@ var settings = new Dictionary<string, string>
     { "Mailing:FromAddress", Environment.GetEnvironmentVariable("FROM_EMAIL_ADDRESS") ??
         builder.Configuration.GetSection("Secrets:FromEmailAddress").Value },
 
-    { "Mailing:FromName", builder.Configuration.GetSection("Mailing:FromName").Value }
+    { "Mailing:FromName", builder.Configuration.GetSection("Mailing:FromName").Value },
+
+    { "Cors:FrontendUrl", Environment.GetEnvironmentVariable("FRONTEND_URL") ??
+        builder.Configuration.GetSection("Secrets:FrontendUrl").Value }
 };
 
 var configurationBuilder = new ConfigurationBuilder();
@@ -93,7 +96,8 @@ builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(builder =>
             {
-                builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().DisallowCredentials();
+                builder.AllowAnyMethod().AllowAnyHeader().DisallowCredentials()
+                    .WithOrigins(configuration.GetSection("Cors:FrontendUrl").Value);
             }
         );
     }
