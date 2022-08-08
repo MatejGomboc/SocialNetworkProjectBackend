@@ -107,10 +107,10 @@ builder.Services.AddSingleton<EmailService>();
 
 WebApplication app = builder.Build();
 
+app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.UseCors();
 app.Run();
