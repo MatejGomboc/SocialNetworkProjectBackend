@@ -97,7 +97,7 @@ builder.Services.AddCors(options =>
         options.AddDefaultPolicy(builder =>
             {
                 builder.AllowAnyMethod().AllowAnyHeader().DisallowCredentials()
-                    .WithOrigins(configuration.GetSection("Cors:FrontendUrl").Value);
+                    .WithOrigins(new string[] { configuration.GetSection("Cors:FrontendUrl").Value });
             }
         );
     }
