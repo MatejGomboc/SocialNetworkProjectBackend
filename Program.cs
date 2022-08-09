@@ -96,8 +96,8 @@ builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(builder =>
             {
-                builder.AllowAnyMethod().AllowAnyHeader().DisallowCredentials()
-                    .WithOrigins(new string[] { configuration.GetSection("Cors:FrontendUrl").Value });
+                builder.WithOrigins(configuration.GetSection("Cors:FrontendUrl").Value)
+                    .AllowAnyMethod().AllowAnyHeader().DisallowCredentials();
             }
         );
     }
@@ -107,9 +107,9 @@ builder.Services.AddSingleton<EmailService>();
 
 WebApplication app = builder.Build();
 
-app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
